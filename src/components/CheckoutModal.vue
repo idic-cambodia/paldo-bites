@@ -4,7 +4,10 @@
             <button class="modal-close" @click="checkoutOpen = false" aria-label="Close">×</button>
             <div class="modal-handle"></div>
             <h3>Confirm your order</h3>
-            <p class="modal-sub">We need a contact number and your pickup location.</p>
+            <p class="modal-sub">We need a contact number and your pickup location. Opening time: {{ shopOpenTimeLabel }}.</p>
+
+            <div class="field-error" v-if="!shopSettings.isOpen">Shop is currently closed. Please try again later.</div>
+            <div class="field-error" v-else-if="!shopSettings.pickupEnabled">Pickup ordering is currently unavailable.</div>
 
             <!-- PHONE -->
             <div class="field">
@@ -46,7 +49,7 @@
                 <div class="field-row" :class="{ 'has-error': pickupError, 'is-valid': pickupTime }">
                     <span class="field-prefix">🏪</span>
                     <select v-model="pickupTime" @change="validatePickup" class="field-select">
-                        <option value="" disabled>Select a time (open from 11am)</option>
+                        <option value="" disabled>Select a time (open from {{ shopOpenTimeLabel }})</option>
                         <option v-for="t in pickupTimes" :key="t" :value="t">{{ t }}</option>
                     </select>
                     <span class="field-icon" v-if="pickupTime">✅</span>
@@ -67,7 +70,13 @@
                 <div class="char-count">{{ remark.length }} / 300</div>
             </div>
 
-            <button class="confirm-btn" :disabled="!phoneValid || !locationGranted" @click="confirmOrder">🛵 Place order</button>
+            <button
+                class="confirm-btn"
+                :disabled="!phoneValid || !locationGranted || orderSubmitting || !shopSettings.isOpen || !shopSettings.pickupEnabled"
+                @click="confirmOrder"
+            >
+                {{ orderSubmitting ? "Placing order..." : "🛵 Place order" }}
+            </button>
         </div>
     </div>
 </template>
@@ -77,6 +86,7 @@ import { useShop } from "@/store/useShop";
 
 const {
     checkoutOpen,
+    orderSubmitting,
     confirmOrder,
     phoneRaw,
     phoneError,
@@ -93,6 +103,9 @@ const {
     pickupTimes,
     pickupError,
     validatePickup,
+
+    shopSettings,
+    shopOpenTimeLabel,
 
     remark
 } = useShop();

@@ -1,5 +1,5 @@
 <template>
-    <div class="map-modal-overlay" v-if="locationPickerOpen" @click.self="closeLocationPicker">
+    <div class="map-modal-overlay" v-show="locationPickerOpen" @click.self="closeLocationPicker">
         <div class="map-modal">
             <button class="modal-close" @click="closeLocationPicker" aria-label="Close">×</button>
             <div class="modal-handle"></div>

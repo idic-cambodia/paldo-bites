@@ -1,48 +1,57 @@
 <template>
-  <section class="hero">
-    <div class="hero-inner">
-      <div>
-        <div class="eyebrow">Shawarma Best x Paldo Bites KH</div>
-        <h1>Best shawarma & Ilocos empanada, <em>made fresh daily.</em></h1>
-        <p>Authentic Ilocos empanada, juicy shawarma wraps, and Filipino merienda — serving Phnom Penh, Cambodia with flavors from home.</p>
-        <div class="hero-delivery">
-          <span class="dot"></span>
-          Pick-up &amp; Grab delivery available now
-        </div>
-        <div class="hero-ctas">
-          <a href="#menu" class="btn-primary">See the menu</a>
-          <a href="#" class="btn-grab">🛵 Order on Grab</a>
-        </div>
-      </div>
-      <div class="board">
-        <span class="board-slide-label">{{ boardSlide + 1 }} / {{ boardSlides.length }}</span>
-        <div style="position:relative;min-height:220px;">
-          <transition name="slide-fade" mode="out-in">
-            <div :key="boardSlide">
-              <div class="board-row" v-for="item in boardSlides[boardSlide]" :key="item.name">
-                <span class="name">{{ item.name }}</span>
-                <span class="price">{{ item.price }}</span>
-              </div>
+    <section class="hero">
+        <div class="hero-inner">
+            <div>
+                <div class="eyebrow">{{ shopSettings.shopName }}</div>
+                <h1>Best shawarma & Ilocos empanada, <em>made fresh daily.</em></h1>
+                <p>Authentic Ilocos empanada, juicy shawarma wraps, and Filipino merienda — serving Phnom Penh, Cambodia with flavors from home.</p>
+                <div class="hero-delivery">
+                    <span class="dot"></span>
+                    {{ deliveryLine }}
+                </div>
+                <div class="hero-ctas">
+                    <a href="#menu" class="btn-primary">See the menu</a>
+                    <a href="#" class="btn-grab" v-if="shopSettings.grabEnabled">🛵 Delivery by Grab</a>
+                </div>
             </div>
-          </transition>
+            <div class="board">
+                <span class="board-slide-label">{{ boardSlide + 1 }} / {{ boardSlides.length }}</span>
+                <div style="position: relative; min-height: 220px">
+                    <transition name="slide-fade" mode="out-in">
+                        <div :key="boardSlide">
+                            <div class="board-row" v-for="item in boardSlides[boardSlide] || []" :key="item.name">
+                                <span class="name">{{ item.name }}</span>
+                                <span class="price">{{ item.price }}</span>
+                            </div>
+                        </div>
+                    </transition>
+                </div>
+                <div class="board-dots">
+                    <button
+                        v-for="(_, i) in boardSlides"
+                        :key="i"
+                        class="board-dot"
+                        :class="{ active: boardSlide === i }"
+                        @click="goToSlide(i)"
+                        :aria-label="'Slide ' + (i + 1)"
+                    ></button>
+                </div>
+            </div>
         </div>
-        <div class="board-dots">
-          <button
-            v-for="(_, i) in boardSlides"
-            :key="i"
-            class="board-dot"
-            :class="{ active: boardSlide === i }"
-            @click="goToSlide(i)"
-            :aria-label="'Slide ' + (i + 1)"
-          ></button>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
 </template>
 
 <script setup>
-import { useShop } from '@/store/useShop'
+import { computed } from "vue";
+import { useShop } from "@/store/useShop";
 
-const { boardSlides, boardSlide, goToSlide } = useShop()
+const { boardSlides, boardSlide, goToSlide, shopSettings } = useShop();
+
+const deliveryLine = computed(() => {
+    if (!shopSettings.value.isOpen) return "Currently closed";
+    if (shopSettings.value.pickupEnabled && shopSettings.value.grabEnabled) return "Pick-up & Grab delivery available now";
+    if (shopSettings.value.pickupEnabled) return "Pick-up available now";
+    if (shopSettings.value.grabEnabled) return "Grab delivery available now";
+    return "Ordering currently unavailable";
+});
 </script>
