@@ -22,7 +22,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-grab-lg" v-if="shopSettings.grabEnabled">🛵 &nbsp;Open in Grab</button>
+                <!-- <button class="btn-grab-lg" v-if="shopSettings.grabEnabled">🛵 &nbsp;Open in Grab</button> -->
             </div>
         </div>
     </section>

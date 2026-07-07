@@ -11,7 +11,25 @@
                 </div>
                 <div class="hero-ctas">
                     <a href="#menu" class="btn-primary">See the menu</a>
-                    <a href="#" class="btn-grab" v-if="shopSettings.grabEnabled">🛵 Delivery by Grab</a>
+                    <a
+                        v-if="shopSettings.telegram"
+                        :href="telegramUrl"
+                        class="btn-grab"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="Open Telegram"
+                        title="Telegram"
+                    >
+                        <div class="social-icon-btn social-telegram">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                    fill="currentColor"
+                                    d="M9.04 15.52 8.66 20.9c.54 0 .77-.23 1.05-.52l2.52-2.4 5.23 3.83c.96.53 1.64.25 1.9-.89l3.45-16.16h.01c.31-1.45-.52-2.02-1.45-1.68L1.1 10.86c-1.38.53-1.36 1.3-.24 1.65l5.19 1.62L18.1 6.6c.57-.35 1.1-.16.67.2z"
+                                />
+                            </svg>
+                        </div>
+                        Chat US
+                    </a>
                 </div>
             </div>
             <div class="board">
@@ -47,6 +65,7 @@ import { useShop } from "@/store/useShop";
 
 const { boardSlides, boardSlide, goToSlide, shopSettings } = useShop();
 
+const telegramUrl = computed(() => `https://t.me/${shopSettings.value.telegram}`);
 const deliveryLine = computed(() => {
     if (!shopSettings.value.isOpen) return "Currently closed";
     if (shopSettings.value.pickupEnabled && shopSettings.value.grabEnabled) return "Pick-up & Grab delivery available now";
