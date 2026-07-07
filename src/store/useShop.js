@@ -2,10 +2,10 @@ import { ref, computed, nextTick, watch } from "vue";
 import { io } from "socket.io-client";
 import { ulam as fallbackUlam, merienda as fallbackMerienda, boardSlides as fallbackBoardSlides } from "@/data/menu";
 
-const MENU_API_URL = import.meta.env.VITE_MENU_API_URL || "/api/user/menu";
-const SETTINGS_API_URL = import.meta.env.VITE_SETTINGS_API_URL || "/api/user/settings";
-const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL || "/api/user/orders";
-const SOCKET_API_URL = import.meta.env.VITE_SOCKET_API_URL || import.meta.env.VITE_API_URL || "http://127.0.0.1:4000";
+const MENU_API_URL = "/api/user/menu";
+const SETTINGS_API_URL = "/api/user/settings";
+const ORDER_API_URL = "/api/user/orders";
+const SOCKET_API_URL = import.meta.env.VITE_SOCKET_API_URL || import.meta.env.VITE_BASE_URL;
 const ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-orders";
 const LEGACY_ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-order";
 const ORDER_TRACKING_KEEP_AFTER_DONE_MS = 5 * 60 * 60 * 1000;

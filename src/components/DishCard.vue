@@ -1,7 +1,7 @@
 <template>
     <div class="dish">
         <div class="dish-img">
-            <img v-if="dish.img && !imgFailed" :src="dish.img" :alt="dish.name" loading="lazy" @error="onImgError" />
+            <img v-if="dish.img && !imgFailed" :src="solveImageUrl(dish.img)" :alt="dish.name" loading="lazy" @error="onImgError" />
             <div v-else class="img-fallback">{{ dish.icon || "🍽️" }}</div>
             <div class="card-badge" v-if="qtyInCart(dish.id) > 0">{{ qtyInCart(dish.id) }} in basket</div>
             <div class="min-tag" v-if="dish.minQty">Min. {{ dish.minQty }} pcs</div>
@@ -27,6 +27,12 @@ const props = defineProps({
 
 const { qtyInCart, addToCart, shopSettings } = useShop();
 const imgFailed = ref(false);
+
+const solveImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${window.location.origin}${url}`;
+};
 
 watch(
     () => props.dish?.img,
