@@ -1,6 +1,12 @@
 import { ref, computed, nextTick, watch } from "vue";
 import { io } from "socket.io-client";
-import { ulam as fallbackUlam, merienda as fallbackMerienda, boardSlides as fallbackBoardSlides } from "@/data/menu";
+
+const CATEGORY_PRIORITY = {
+    ulam: 1,
+    merienda: 2
+};
+
+const BOARD_SLIDES_FALLBACK = [[{ name: "Loading menu...", price: "" }]];
 
 const MENU_API_URL = "/api/user/menu";
 const SETTINGS_API_URL = "/api/user/settings";
@@ -19,8 +25,18 @@ const SOCKET_EVENTS = {
     JOIN_ADMIN_ROOM: "join:admin_room"
 };
 
-const ulam = ref([...fallbackUlam]);
-const merienda = ref([...fallbackMerienda]);
+const menuByCategory = ref({});
+const menuCategories = computed(() =>
+    Object.keys(menuByCategory.value).sort((a, b) => {
+        const aPriority = CATEGORY_PRIORITY[a.toLowerCase()] ?? Number.MAX_SAFE_INTEGER;
+        const bPriority = CATEGORY_PRIORITY[b.toLowerCase()] ?? Number.MAX_SAFE_INTEGER;
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return a.localeCompare(b);
+    })
+);
+const menuItems = computed(() => menuCategories.value.flatMap((category) => menuByCategory.value[category] || []));
+const ulam = computed(() => menuByCategory.value.Ulam || []);
+const merienda = computed(() => menuByCategory.value.Merienda || []);
 const menuLoading = ref(false);
 const menuError = ref("");
 let hasRequestedMenu = false;
@@ -483,6 +499,19 @@ function menuImage(raw, name) {
     return undefined;
 }
 
+function normalizeCategory(value) {
+    const raw = String(value || "")
+        .trim()
+        .toLowerCase();
+    if (!raw) return "Ulam";
+    if (raw.includes("merienda") || raw.includes("snack")) return "Merienda";
+    if (raw.includes("ulam") || raw.includes("main")) return "Ulam";
+    return raw
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+}
+
 function toDish(raw, fallbackId) {
     if (!raw || typeof raw !== "object") return null;
 
@@ -492,11 +521,13 @@ function toDish(raw, fallbackId) {
 
     const minQty = Number(raw.minQty ?? raw.min_qty ?? raw.minimum_qty ?? 1);
     const menuItemId = raw._id ?? raw.id ?? raw.menu_id ?? raw.menuItemId ?? fallbackId;
+    const category = normalizeCategory(raw.category || raw.type || raw.group);
     return {
         id: menuItemId,
         menuItemId,
         name,
         price,
+        category,
         icon: raw.icon || "🍽️",
         desc: raw.desc || raw.description || "",
         img: menuImage(raw, name),
@@ -506,7 +537,7 @@ function toDish(raw, fallbackId) {
 
 function splitMenu(payload) {
     if (payload && typeof payload === "object" && payload.success === false) {
-        return { ulam: [], merienda: [] };
+        return {};
     }
 
     if (payload && typeof payload === "object") {
@@ -514,24 +545,28 @@ function splitMenu(payload) {
         const sourceUlam = Array.isArray(source.ulam) ? source.ulam : [];
         const sourceMerienda = Array.isArray(source.merienda) ? source.merienda : [];
         if (sourceUlam.length || sourceMerienda.length) {
-            return { ulam: sourceUlam, merienda: sourceMerienda };
+            return {
+                Ulam: sourceUlam,
+                Merienda: sourceMerienda
+            };
         }
     }
 
     const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.menu) ? payload.menu : [];
 
-    const grouped = { ulam: [], merienda: [] };
+    const grouped = {};
     for (const row of rows) {
-        const categoryRaw = String(row?.category || row?.type || row?.group || "").toLowerCase();
-        const category = categoryRaw.includes("merienda") || categoryRaw.includes("snack") ? "merienda" : "ulam";
+        if (row?.available === false) continue;
+        const category = normalizeCategory(row?.category || row?.type || row?.group);
+        if (!grouped[category]) grouped[category] = [];
         grouped[category].push(row);
     }
     return grouped;
 }
 
 const boardSlides = computed(() => {
-    const all = [...ulam.value, ...merienda.value];
-    if (!all.length) return fallbackBoardSlides;
+    const all = menuItems.value;
+    if (!all.length) return BOARD_SLIDES_FALLBACK;
 
     const lines = all.map((item) => ({
         name: item.name,
@@ -542,7 +577,7 @@ const boardSlides = computed(() => {
     for (let i = 0; i < lines.length; i += 5) {
         slides.push(lines.slice(i, i + 5));
     }
-    return slides.length ? slides : fallbackBoardSlides;
+    return slides.length ? slides : BOARD_SLIDES_FALLBACK;
 });
 
 async function loadMenu({ force = false } = {}) {
@@ -563,16 +598,22 @@ async function loadMenu({ force = false } = {}) {
 
         const data = await res.json();
         const split = splitMenu(data);
+        const normalizedByCategory = {};
 
-        const normalizedUlam = split.ulam.map((row, idx) => toDish(row, `u-${idx + 1}`)).filter(Boolean);
-        const normalizedMerienda = split.merienda.map((row, idx) => toDish(row, `m-${idx + 1}`)).filter(Boolean);
+        Object.entries(split).forEach(([category, items]) => {
+            const normalizedItems = (Array.isArray(items) ? items : [])
+                .map((row, idx) => toDish(row, `${category.toLowerCase()}-${idx + 1}`))
+                .filter(Boolean);
+            if (normalizedItems.length) {
+                normalizedByCategory[normalizeCategory(category)] = normalizedItems;
+            }
+        });
 
-        if (!normalizedUlam.length && !normalizedMerienda.length) {
+        if (!Object.keys(normalizedByCategory).length) {
             throw new Error("Menu response is empty or has an unexpected format.");
         }
 
-        ulam.value = normalizedUlam;
-        merienda.value = normalizedMerienda;
+        menuByCategory.value = normalizedByCategory;
         hasRequestedMenu = true;
     } catch (err) {
         menuError.value = err instanceof Error ? err.message : "Failed to load menu.";
@@ -861,6 +902,7 @@ function openCheckout() {
     pickupTime.value = "";
     pickupError.value = "";
     remark.value = "";
+    name.value = "";
 
     checkoutOpen.value = true;
     drawerOpen.value = false;
@@ -916,6 +958,9 @@ function validatePickup() {
 // ── REMARK ──
 const remark = ref("");
 
+// ── NAME ──
+const name = ref("");
+
 function formattedPhone() {
     return phoneRaw.value.replace(/\D/g, "");
 }
@@ -931,6 +976,7 @@ async function confirmOrder() {
     }
 
     const payload = {
+        name: name.value,
         phone: formattedPhone(),
         location: locationCoords ? `${locationCoords.lat}, ${locationCoords.lng}` : "",
         mapUrl: locationMapUrl.value,
@@ -998,6 +1044,8 @@ export function useShop() {
         loadSettings,
         shopOpenTimeLabel,
         // menu
+        menuByCategory,
+        menuCategories,
         ulam,
         merienda,
         menuLoading,
@@ -1065,6 +1113,9 @@ export function useShop() {
         fetchOrderStatus,
 
         // remark
-        remark
+        remark,
+
+        // name
+        name
     };
 }

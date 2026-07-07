@@ -9,6 +9,14 @@
             <div class="field-error" v-if="!shopSettings.isOpen">Shop is currently closed. Please try again later.</div>
             <div class="field-error" v-else-if="!shopSettings.pickupEnabled">Pickup ordering is currently unavailable.</div>
 
+            <!-- NAME -->
+            <div class="field">
+                <label>Your Name</label>
+                <div class="field-row">
+                    <input type="text" placeholder="" v-model="name" @input="validateName" />
+                </div>
+            </div>
+
             <!-- PHONE -->
             <div class="field">
                 <label>📱 Cambodia phone number</label>
@@ -107,6 +115,8 @@ const {
     shopSettings,
     shopOpenTimeLabel,
 
-    remark
+    remark,
+
+    name
 } = useShop();
 </script>
