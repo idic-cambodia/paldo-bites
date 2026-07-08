@@ -37,8 +37,11 @@
         </div>
 
         <div class="drawer-foot">
+            <p class="modal-warning">Note: Delivery fee is not included yet.</p>
+            <br />
             <div class="total-row">
                 <span>Total</span><span>${{ cartTotal.toFixed(2) }}</span>
+                <span>${{ cartTotal.toFixed(2) }}</span>
             </div>
             <button class="checkout-btn" :disabled="cart.length === 0" @click="openCheckout">Place order</button>
         </div>

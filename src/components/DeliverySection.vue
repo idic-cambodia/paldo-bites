@@ -7,13 +7,15 @@
             </div>
             <div>
                 <div class="grab-options">
-                    <div class="grab-option" v-if="shopSettings.pickupEnabled">
-                        <span class="icon">🏪</span>
-                        <div>
-                            <div class="label">Walk in or call ahead</div>
-                            <div class="val">Pick-up</div>
+                    <a href="https://www.google.com/maps?q=11.509584,104.858734" target="_blank">
+                        <div class="grab-option" v-if="shopSettings.pickupEnabled">
+                            <span class="icon">📍</span>
+                            <div>
+                                <div class="label">Check our location to</div>
+                                <div class="val">Pick-up</div>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                     <div class="grab-option" v-if="shopSettings.grabEnabled">
                         <span class="icon">🛵</span>
                         <div>

@@ -78,6 +78,13 @@
                 <div class="char-count">{{ remark.length }} / 300</div>
             </div>
 
+            <!-- NOTED -->
+            <div class="field">
+                <label>NOTE: </label>
+                <span class="modal-sub">We will contact you to confirm your order.</span>
+                <p class="modal-sub modal-warning">NO CONFIRMATION, NO ORDER.</p>
+            </div>
+
             <button
                 class="confirm-btn"
                 :disabled="!phoneValid || !locationGranted || orderSubmitting || !shopSettings.isOpen || !shopSettings.pickupEnabled"
