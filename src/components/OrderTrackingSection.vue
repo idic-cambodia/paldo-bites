@@ -25,7 +25,7 @@
             <div class="track-card" v-for="order in trackedOrders" :key="order.orderId">
                 <div class="track-row">
                     <span class="k">Order ID</span>
-                    <span class="v">{{ order.orderId }}</span>
+                    <button type="button" class="v track-id-btn" @click="selectTrackedOrderId(order.orderId)">{{ order.orderId }}</button>
                 </div>
                 <div class="track-row">
                     <span class="k">Status</span>
@@ -66,7 +66,11 @@
 <script setup>
 import { useShop } from "@/store/useShop";
 
-const { trackedOrders, orderSocketConnected, orderLookupId, orderLookupLoading, orderLookupError, fetchOrderStatus } = useShop();
+const { trackedOrders, orderSocketConnected, orderLookupId, orderLookupLoading, orderLookupError, setOrderLookupId, fetchOrderStatus } = useShop();
+
+function selectTrackedOrderId(orderId) {
+    setOrderLookupId(orderId);
+}
 
 function formatDate(value) {
     const dt = new Date(value);

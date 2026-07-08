@@ -14,7 +14,7 @@ const ORDER_API_URL = "/api/user/orders";
 const SOCKET_API_URL = import.meta.env.VITE_SOCKET_API_URL || import.meta.env.VITE_BASE_URL;
 const ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-orders";
 const LEGACY_ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-order";
-const ORDER_TRACKING_KEEP_AFTER_DONE_MS = 5 * 60 * 60 * 1000;
+const ORDER_TRACKING_KEEP_AFTER_DONE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 const SOCKET_EVENTS = {
     ORDER_NEW: "order:new",
@@ -276,7 +276,7 @@ function persistTrackedOrder() {
     scheduleTrackedOrderCleanup();
 }
 
-function restoreTrackedOrderFromLocal() {
+async function restoreTrackedOrderFromLocal() {
     const storage = trackingStorage();
     if (!storage) return;
 
@@ -309,22 +309,18 @@ function restoreTrackedOrderFromLocal() {
         return;
     }
 
-    orderLookupId.value = trackedOrders.value[0].orderId;
-    persistTrackedOrder();
-
-    const activeOrderIds = trackedOrders.value.filter((item) => !isTerminalOrderStatus(item.status)).map((item) => item.orderId);
-    if (activeOrderIds.length) {
-        const socket = ensureOrderSocket();
-        bindOrderUpdateListener();
-        socket.connect();
-        activeOrderIds.forEach((id) => joinOrderRoom(id));
-    }
+    await validateTrackedOrdersWithApi();
 }
 
 function normalizeOrderId(value) {
     if (value === null || value === undefined) return "";
     const id = String(value).trim();
     return id;
+}
+
+function setOrderLookupId(value) {
+    orderLookupId.value = normalizeOrderId(value);
+    orderLookupError.value = "";
 }
 
 function extractOrderId(payload) {
@@ -352,6 +348,70 @@ function extractOrderData(payload) {
     const source = payload?.data?.order ?? payload?.data ?? payload?.order ?? payload;
     if (!source || typeof source !== "object") return null;
     return source;
+}
+
+async function hydrateTrackedOrderFromApi(item) {
+    const orderId = normalizeOrderId(item?.orderId ?? item?.id);
+    if (!orderId) return null;
+
+    try {
+        const res = await fetch(`${ORDER_API_URL}/${encodeURIComponent(orderId)}`, {
+            headers: { Accept: "application/json" }
+        });
+
+        let body = null;
+        try {
+            body = await res.json();
+        } catch {
+            // Ignore non-JSON body.
+        }
+
+        if (!res.ok || (body && body.success === false)) {
+            return null;
+        }
+
+        const source = extractOrderData(body);
+        const fetchedOrderId = extractOrderId(source || body) || orderId;
+        const fetchedStatus = extractOrderStatus(source || body) || item.status || "pending";
+        const nowIso = new Date().toISOString();
+
+        return normalizeTrackedOrder(
+            {
+                ...item,
+                ...(source && typeof source === "object" ? source : {}),
+                orderId: fetchedOrderId,
+                status: fetchedStatus,
+                updatedAt: nowIso,
+                ...(isTerminalOrderStatus(fetchedStatus) ? { terminalAt: item.terminalAt || nowIso } : { terminalAt: null })
+            },
+            item
+        );
+    } catch {
+        return null;
+    }
+}
+
+async function validateTrackedOrdersWithApi() {
+    if (!trackedOrders.value.length) return;
+
+    const hydrated = await Promise.all(trackedOrders.value.map((item) => hydrateTrackedOrderFromApi(item)));
+    trackedOrders.value = hydrated.filter(Boolean).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    if (!trackedOrders.value.length) {
+        clearTrackedOrderRecord();
+        return;
+    }
+
+    orderLookupId.value = trackedOrders.value[0].orderId;
+    persistTrackedOrder();
+
+    const activeOrderIds = trackedOrders.value.filter((item) => !isTerminalOrderStatus(item.status)).map((item) => item.orderId);
+    if (!activeOrderIds.length) return;
+
+    const socket = ensureOrderSocket();
+    bindOrderUpdateListener();
+    socket.connect();
+    activeOrderIds.forEach((id) => joinOrderRoom(id));
 }
 
 function ensureOrderSocket() {
@@ -1033,7 +1093,7 @@ async function confirmOrder() {
     }
 }
 
-restoreTrackedOrderFromLocal();
+void restoreTrackedOrderFromLocal();
 
 export function useShop() {
     return {
@@ -1110,6 +1170,7 @@ export function useShop() {
         orderLookupId,
         orderLookupLoading,
         orderLookupError,
+        setOrderLookupId,
         fetchOrderStatus,
 
         // remark
