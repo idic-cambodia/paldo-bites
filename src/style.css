@@ -754,7 +754,7 @@
     .hero h1{font-size:30px;}
     .hero p{font-size:14px;}
     .board{padding:16px 18px;}
-    .hero-board--images{padding:14px;min-height:340px;height:auto;}
+    .hero-board--images{padding:14px;min-height:390px;height:auto;}
     .hero-image-copy{align-items:flex-start;flex-direction:column;gap:8px;}
     .hero-image-name{font-size:18px;}
     .hero-image-desc{max-width:none;}
