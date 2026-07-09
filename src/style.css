@@ -163,8 +163,8 @@
 
   .hero-slide-enter-active{transition:opacity .45s ease, transform .45s ease;}
   .hero-slide-leave-active{transition:opacity .3s ease, transform .3s ease;position:absolute;inset:20px 20px 64px;}
-  .hero-slide-enter-from{opacity:0;transform:translateY(14px) scale(.985);}
-  .hero-slide-leave-to{opacity:0;transform:translateY(-10px) scale(.99);}
+  .hero-slide-enter-from{opacity:0;}
+  .hero-slide-leave-to{opacity:0;}
 
   /* slide transition */
   .slide-fade-enter-active{transition:opacity .5s ease, transform .5s ease;}
