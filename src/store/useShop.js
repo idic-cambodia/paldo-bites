@@ -836,6 +836,8 @@ function validatePhone() {
 const locationGranted = ref(false);
 const locationLoading = ref(false);
 const locationError = ref("");
+const locationLabelError = ref("");
+const locationInputMode = ref("label"); // "label" | "shared"
 const locationLabel = ref("");
 const locationMapUrl = ref("");
 let locationCoords = null;
@@ -889,11 +891,26 @@ function onPickerMapMoveStart() {
 
 let geocodeDebounce = null;
 let geocodeToken = 0;
+const GEOCODE_LOOKUP_LABEL = "Looking up address...";
+const GEOCODE_LOOKUP_LABEL_UNICODE = "Looking up address…";
+const GEOCODE_DEFAULT_HINT = "Move the map to drop the pin...";
+const GEOCODE_DEFAULT_HINT_UNICODE = "Move the map to drop the pin…";
+
+function isTransientPickerLabel(label) {
+    const value = String(label || "").trim();
+    return (
+        !value ||
+        value === GEOCODE_LOOKUP_LABEL ||
+        value === GEOCODE_LOOKUP_LABEL_UNICODE ||
+        value === GEOCODE_DEFAULT_HINT ||
+        value === GEOCODE_DEFAULT_HINT_UNICODE
+    );
+}
 
 function reverseGeocode(lat, lng) {
     clearTimeout(geocodeDebounce);
     const myToken = ++geocodeToken;
-    pickerAddressLabel.value = "Looking up address…";
+    pickerAddressLabel.value = GEOCODE_LOOKUP_LABEL_UNICODE;
     geocodeDebounce = setTimeout(async () => {
         try {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
@@ -933,10 +950,30 @@ function confirmPickedLocation() {
     const { lat, lng } = pickerCoords.value;
     locationCoords = { lat, lng };
     locationGranted.value = true;
-    locationLabel.value = pickerAddressLabel.value || `${lat}, ${lng}`;
+    locationLabel.value = isTransientPickerLabel(pickerAddressLabel.value) ? `${lat}, ${lng}` : pickerAddressLabel.value;
     locationMapUrl.value = `https://www.google.com/maps?q=${lat},${lng}`;
     locationError.value = "";
     locationPickerOpen.value = false;
+}
+
+function validateLocationInput() {
+    locationError.value = "";
+    locationLabelError.value = "";
+
+    if (locationInputMode.value === "shared") {
+        if (!locationGranted.value) {
+            locationError.value = "Please share your location.";
+            return false;
+        }
+        return true;
+    }
+
+    if (!locationLabel.value.trim()) {
+        locationLabelError.value = "Please enter your location label.";
+        return false;
+    }
+
+    return true;
 }
 
 function openCheckout() {
@@ -955,10 +992,15 @@ function openCheckout() {
 
     locationGranted.value = false;
     locationError.value = "";
+    locationLabelError.value = "";
+    locationInputMode.value = "label";
     locationLabel.value = "";
     locationMapUrl.value = "";
     locationCoords = null;
 
+    orderType.value = "delivery";
+    deliveryTime.value = "";
+    deliveryError.value = "";
     pickupTime.value = "";
     pickupError.value = "";
     remark.value = "";
@@ -969,6 +1011,9 @@ function openCheckout() {
 }
 
 // ── PICKUP TIME ──
+const orderType = ref("delivery"); // "delivery" | "pickup"
+const deliveryTime = ref("");
+const deliveryError = ref("");
 const pickupTime = ref("");
 const pickupError = ref("");
 
@@ -994,6 +1039,24 @@ const pickupTimes = computed(() => {
 
     return times;
 });
+
+const deliveryTimes = computed(() => pickupTimes.value);
+
+function validateDelivery() {
+    deliveryError.value = "";
+
+    if (!shopSettings.value.isOpen) {
+        deliveryError.value = "Shop is currently closed.";
+        return false;
+    }
+
+    if (!deliveryTime.value) {
+        deliveryError.value = "Please select a delivery time.";
+        return false;
+    }
+
+    return true;
+}
 
 function validatePickup() {
     pickupError.value = "";
@@ -1029,23 +1092,31 @@ async function confirmOrder() {
     if (orderSubmitting.value) return;
 
     validatePhone();
-    validatePickup();
+    const hasValidLocation = validateLocationInput();
 
-    if (!phoneValid.value || !locationGranted.value || pickupError.value) {
+    const isDelivery = orderType.value === "delivery";
+    const hasValidSchedule = isDelivery ? validateDelivery() : validatePickup();
+
+    if (!phoneValid.value || !hasValidLocation || !hasValidSchedule) {
         return;
     }
 
-    const payload = {
+    const basePayload = {
         name: name.value,
         phone: formattedPhone(),
         location: locationCoords ? `${locationCoords.lat}, ${locationCoords.lng}` : "",
+        locationLabel: locationLabel.value,
         mapUrl: locationMapUrl.value,
-        pickupTime: pickupTime.value,
         remark: remark.value,
         items: cart.value.map((item) => ({
             menuItemId: String(item.menuItemId || item.id),
             qty: item.qty
         }))
+    };
+
+    const payload = {
+        ...basePayload,
+        ...(isDelivery ? { deliveryTime: deliveryTime.value } : { pickupTime: pickupTime.value })
     };
 
     orderSubmitting.value = true;
@@ -1140,8 +1211,11 @@ export function useShop() {
         locationGranted,
         locationLoading,
         locationError,
+        locationLabelError,
+        locationInputMode,
         locationLabel,
         locationMapUrl,
+        validateLocationInput,
         // location picker
         locationPickerOpen,
         pickerLocating,
@@ -1156,6 +1230,11 @@ export function useShop() {
         onPickerMapMoved,
         onPickerMapMoveStart,
         // pickup
+        orderType,
+        deliveryTime,
+        deliveryTimes,
+        deliveryError,
+        validateDelivery,
         pickupTime,
         pickupTimes,
         pickupError,
