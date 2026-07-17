@@ -16,6 +16,24 @@ const ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-orders";
 const LEGACY_ORDER_TRACKING_STORAGE_KEY = "paldo:tracked-order";
 const ORDER_TRACKING_KEEP_AFTER_DONE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+function apiMessage(payload, fallback = "Request failed.") {
+    if (!payload || typeof payload !== "object") return fallback;
+    return payload.msg || payload.message || fallback;
+}
+
+function isApiError(payload) {
+    if (!payload || typeof payload !== "object") return false;
+    if (payload.success === false) return true;
+
+    const status = Number(payload.status);
+    return Number.isFinite(status) && status >= 400;
+}
+
+function apiData(payload) {
+    if (!payload || typeof payload !== "object") return payload;
+    return Object.prototype.hasOwnProperty.call(payload, "data") ? payload.data : payload;
+}
+
 const SOCKET_EVENTS = {
     ORDER_NEW: "order:new",
     ORDER_STATUS_UPDATE: "order:status_update",
@@ -93,11 +111,11 @@ async function loadSettings({ force = false } = {}) {
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
 
         const body = await res.json();
-        if (body && body.success === false) {
-            throw new Error(body.message || "Failed to load settings.");
+        if (isApiError(body)) {
+            throw new Error(apiMessage(body, "Failed to load settings."));
         }
 
-        const source = body?.data && typeof body.data === "object" ? body.data : body;
+        const source = apiData(body);
         shopSettings.value = normalizeShopSettings(source);
         hasRequestedSettings = true;
     } catch (err) {
@@ -366,7 +384,7 @@ async function hydrateTrackedOrderFromApi(item) {
             // Ignore non-JSON body.
         }
 
-        if (!res.ok || (body && body.success === false)) {
+        if (!res.ok || isApiError(body)) {
             return null;
         }
 
@@ -512,9 +530,8 @@ async function fetchOrderStatus(orderIdInput = orderLookupId.value) {
             // Ignore non-JSON body.
         }
 
-        if (!res.ok || (body && body.success === false)) {
-            const message = body?.message || `Order not found (${res.status})`;
-            throw new Error(message);
+        if (!res.ok || isApiError(body)) {
+            throw new Error(apiMessage(body, `Order not found (${res.status})`));
         }
 
         const source = extractOrderData(body);
@@ -596,7 +613,7 @@ function toDish(raw, fallbackId) {
 }
 
 function splitMenu(payload) {
-    if (payload && typeof payload === "object" && payload.success === false) {
+    if (isApiError(payload)) {
         return {};
     }
 
@@ -657,6 +674,10 @@ async function loadMenu({ force = false } = {}) {
         }
 
         const data = await res.json();
+        if (isApiError(data)) {
+            throw new Error(apiMessage(data, "Failed to load menu."));
+        }
+
         const split = splitMenu(data);
         const normalizedByCategory = {};
 
@@ -1130,22 +1151,15 @@ async function confirmOrder() {
             body: JSON.stringify(payload)
         });
 
-        if (!res.ok) {
-            let message = `Failed to place order (${res.status})`;
-            try {
-                const errorBody = await res.json();
-                if (errorBody?.message) message = errorBody.message;
-            } catch {
-                // Ignore non-JSON error body.
-            }
-            throw new Error(message);
-        }
-
         let body = null;
         try {
             body = await res.json();
         } catch {
             // Some APIs return 201/204 without JSON.
+        }
+
+        if (!res.ok || isApiError(body)) {
+            throw new Error(apiMessage(body, `Failed to place order (${res.status})`));
         }
 
         const createdOrderId = extractOrderId(body);
