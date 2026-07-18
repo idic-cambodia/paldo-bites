@@ -293,8 +293,15 @@
     color:#385968;
     font-size:14px;
   }
-  .payment-link{
+  .payment-actions{
     margin-top:16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .payment-link{
+    margin-top:0;
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -311,6 +318,8 @@
     background:#073f57;
     transform:translateY(-1px);
   }
+  .payment-link--telegram{background:#229ed9;}
+  .payment-link--telegram:hover{background:#1688bd;}
   .payment-qr-link{
     display:block;
     overflow:hidden;
@@ -335,6 +344,7 @@
       width:min(100%,280px);
       margin:0 auto;
     }
+    .payment-actions{align-items:stretch;flex-direction:column;}
     .payment-link{width:100%;}
   }
 
