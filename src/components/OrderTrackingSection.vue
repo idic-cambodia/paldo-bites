@@ -22,29 +22,43 @@
 
             <div class="track-error" v-if="orderLookupError">{{ orderLookupError }}</div>
 
-            <aside v-if="trackedOrders.length" class="payment-card" aria-labelledby="payment-title">
+            <aside v-if="trackedOrders.length && (shopSettings.paymentLink || shopSettings.paymentQr)" class="payment-card" aria-labelledby="payment-title">
                 <div class="payment-copy">
                     <div class="payment-label">Secure Payment</div>
                     <h3 id="payment-title">Pay with ABA</h3>
                     <p>Scan the QR code with your banking app, or open the ABA payment link on this device.</p>
-                    <a
-                        class="payment-link"
-                        href="https://pay.ababank.com/oRF8/wpbjimj5"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Open ABA Pay
-                        <span aria-hidden="true">↗</span>
-                    </a>
+                    <div class="payment-actions">
+                        <a
+                            v-if="shopSettings.paymentLink"
+                            class="payment-link"
+                            :href="shopSettings.paymentLink"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Open ABA Pay
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                        <a
+                            v-if="shopSettings.telegramSupport"
+                            class="payment-link payment-link--telegram"
+                            :href="`https://t.me/${shopSettings.telegramSupport}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Tell Us Paid
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                    </div>
                 </div>
                 <a
+                    v-if="shopSettings.paymentQr"
                     class="payment-qr-link"
-                    href="https://pay.ababank.com/oRF8/wpbjimj5"
+                    :href="shopSettings.paymentLink || shopSettings.paymentQr"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open ABA payment link"
                 >
-                    <img class="payment-qr" src="/aba-payment-qr.jpg" alt="ABA payment QR code" />
+                    <img class="payment-qr" :src="shopSettings.paymentQr" alt="ABA payment QR code" />
                 </a>
             </aside>
 
@@ -92,7 +106,7 @@
 <script setup>
 import { useShop } from "@/store/useShop";
 
-const { trackedOrders, orderSocketConnected, orderLookupId, orderLookupLoading, orderLookupError, setOrderLookupId, fetchOrderStatus } = useShop();
+const { shopSettings, trackedOrders, orderSocketConnected, orderLookupId, orderLookupLoading, orderLookupError, setOrderLookupId, fetchOrderStatus } = useShop();
 
 function selectTrackedOrderId(orderId) {
     setOrderLookupId(orderId);
