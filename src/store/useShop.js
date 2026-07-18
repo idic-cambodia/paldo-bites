@@ -66,6 +66,9 @@ const defaultShopSettings = Object.freeze({
     email: "",
     facebook: "",
     telegram: "",
+    telegramSupport: "",
+    paymentLink: "",
+    paymentQr: "",
     openTime: "11:00",
     maxOrdersPerDay: 50,
     grabEnabled: true,
@@ -89,6 +92,12 @@ function normalizeShopSettings(raw) {
         email: typeof raw.email === "string" ? raw.email.trim() : defaultShopSettings.email,
         facebook: typeof raw.facebook === "string" ? raw.facebook.trim().replace(/^@+/, "") : defaultShopSettings.facebook,
         telegram: typeof raw.telegram === "string" ? raw.telegram.trim().replace(/^@+/, "") : defaultShopSettings.telegram,
+        telegramSupport:
+            typeof raw.telegramSupport === "string"
+                ? raw.telegramSupport.trim().replace(/^@+/, "")
+                : defaultShopSettings.telegramSupport,
+        paymentLink: typeof raw.payment_link === "string" ? raw.payment_link.trim() : defaultShopSettings.paymentLink,
+        paymentQr: typeof raw.payment_qr === "string" ? raw.payment_qr.trim() : defaultShopSettings.paymentQr,
         openTime: typeof raw.openTime === "string" && raw.openTime.trim() ? raw.openTime.trim() : defaultShopSettings.openTime,
         maxOrdersPerDay: Number.isFinite(Number(raw.maxOrdersPerDay)) ? Number(raw.maxOrdersPerDay) : defaultShopSettings.maxOrdersPerDay,
         grabEnabled: typeof raw.grabEnabled === "boolean" ? raw.grabEnabled : defaultShopSettings.grabEnabled,
