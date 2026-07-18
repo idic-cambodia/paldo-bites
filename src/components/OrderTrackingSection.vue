@@ -22,6 +22,32 @@
 
             <div class="track-error" v-if="orderLookupError">{{ orderLookupError }}</div>
 
+            <aside class="payment-card" aria-labelledby="payment-title">
+                <div class="payment-copy">
+                    <div class="payment-label">Secure Payment</div>
+                    <h3 id="payment-title">Pay with ABA</h3>
+                    <p>Scan the QR code with your banking app, or open the ABA payment link on this device.</p>
+                    <a
+                        class="payment-link"
+                        href="https://pay.ababank.com/oRF8/wpbjimj5"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open ABA Pay
+                        <span aria-hidden="true">↗</span>
+                    </a>
+                </div>
+                <a
+                    class="payment-qr-link"
+                    href="https://pay.ababank.com/oRF8/wpbjimj5"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open ABA payment link"
+                >
+                    <img class="payment-qr" src="/aba-payment-qr.jpg" alt="ABA payment QR code" />
+                </a>
+            </aside>
+
             <div class="track-card" v-for="order in trackedOrders" :key="order.orderId">
                 <div class="track-row">
                     <span class="k">Order ID</span>
