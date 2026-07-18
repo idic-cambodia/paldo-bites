@@ -22,7 +22,7 @@
 
             <div class="track-error" v-if="orderLookupError">{{ orderLookupError }}</div>
 
-            <aside class="payment-card" aria-labelledby="payment-title">
+            <aside v-if="trackedOrders.length" class="payment-card" aria-labelledby="payment-title">
                 <div class="payment-copy">
                     <div class="payment-label">Secure Payment</div>
                     <h3 id="payment-title">Pay with ABA</h3>
