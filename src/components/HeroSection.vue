@@ -2,7 +2,7 @@
     <section class="hero hero--mosaic">
         <div class="hero-mosaic" aria-hidden="true">
             <div
-                v-for="(item, index) in heroItems"
+                v-for="(item, index) in backgroundItems"
                 :key="`hero-tile-${item.id || index}`"
                 class="hero-mosaic-tile"
                 :class="`hero-mosaic-tile--${index + 1}`"
@@ -84,19 +84,26 @@ const { menuByCategory, menuCategories, shopSettings } = useShop();
 const telegramUrl = computed(() => `https://t.me/${shopSettings.value.telegram}`);
 const facebookUrl = computed(() => `https://facebook.com/${shopSettings.value.facebook}`);
 
-const heroItems = computed(() => {
-    const groups = menuCategories.value
+const menuImageGroups = computed(() =>
+    menuCategories.value
         .map((category) => (menuByCategory.value[category] || []).filter((item) => item?.img))
-        .filter((items) => items.length);
+        .filter((items) => items.length)
+);
 
+const heroItems = computed(() => menuImageGroups.value.flat());
+
+const backgroundItems = computed(() => {
+    const groups = menuImageGroups.value;
     const selected = [];
     let row = 0;
+
     while (selected.length < 8 && groups.some((items) => row < items.length)) {
         groups.forEach((items) => {
             if (selected.length < 8 && items[row]) selected.push(items[row]);
         });
         row += 1;
     }
+
     return selected;
 });
 
