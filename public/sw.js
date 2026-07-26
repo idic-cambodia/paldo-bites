@@ -26,17 +26,28 @@ async function trimImageCache() {
     await Promise.all(requests.slice(0, requests.length - MAX_IMAGE_ENTRIES).map((request) => cache.delete(request)));
 }
 
-async function cacheFirstImage(request) {
+async function staleWhileRevalidateImage(request, event) {
     const cache = await caches.open(IMAGE_CACHE);
     const cached = await cache.match(request);
-    if (cached) return cached;
 
-    const response = await fetch(request);
-    if (response && (response.ok || response.type === "opaque")) {
-        await cache.put(request, response.clone());
-        await trimImageCache();
+    const refresh = fetch(request)
+        .then(async (response) => {
+            if (response && (response.ok || response.type === "opaque")) {
+                await cache.put(request, response.clone());
+                await trimImageCache();
+            }
+            return response;
+        })
+        .catch(() => null);
+
+    if (cached) {
+        event.waitUntil(refresh);
+        return cached;
     }
-    return response;
+
+    const response = await refresh;
+    if (response) return response;
+    return new Response("", { status: 504, statusText: "Image unavailable" });
 }
 
 async function networkFirstMenu(request) {
@@ -62,6 +73,6 @@ self.addEventListener("fetch", (event) => {
     }
 
     if (event.request.destination === "image" || url.pathname.startsWith("/uploads/menu/")) {
-        event.respondWith(cacheFirstImage(event.request));
+        event.respondWith(staleWhileRevalidateImage(event.request, event));
     }
 });
