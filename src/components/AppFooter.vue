@@ -15,21 +15,11 @@
             </div>
 
             <div class="contact-links">
-                <a
-                    v-if="shopSettings.facebook"
-                    :href="`https://facebook.com/${shopSettings.facebook}`"
-                    target="_blank"
-                    rel="noopener"
-                >
+                <a v-if="shopSettings.facebook" :href="`https://facebook.com/${shopSettings.facebook}`" target="_blank" rel="noopener">
                     <span class="contact-icon contact-icon--facebook">f</span>
                     <span>Facebook <b>:</b> {{ shopSettings.facebook }}</span>
                 </a>
-                <a
-                    v-if="shopSettings.telegram"
-                    :href="`https://t.me/${shopSettings.telegram}`"
-                    target="_blank"
-                    rel="noopener"
-                >
+                <a v-if="shopSettings.telegram" :href="`https://t.me/${shopSettings.telegram}`" target="_blank" rel="noopener">
                     <span class="contact-icon">➤</span>
                     <span>Telegram <b>:</b> {{ shopSettings.telegram }}</span>
                 </a>
@@ -43,7 +33,7 @@
             </div>
             <div>
                 <h4>Opening Hours</h4>
-                <p>{{ shopSettings.isOpen ? "Open" : "Closed" }} from {{ shopOpenTimeLabel }} onwards</p>
+                <p>From {{ shopOpenTimeLabel }} onwards</p>
             </div>
             <div>
                 <h4>Deliver Via</h4>
