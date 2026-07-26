@@ -1173,3 +1173,88 @@ footer.contact-footer{
   .contact-links a{font-size:15px;overflow-wrap:anywhere;}
   .footer-details{grid-template-columns:1fr;gap:18px;margin-top:26px;}
 }
+
+
+/* Delivery section alignment refinement */
+.delivery-showcase-inner{
+  grid-template-columns:minmax(0,1.08fr) minmax(540px,.92fr);
+  gap:48px;
+}
+.delivery-showcase-copy{min-width:0;}
+.delivery-showcase-copy h2{
+  white-space:nowrap;
+  font-size:clamp(28px,2.35vw,44px);
+  letter-spacing:-.025em;
+}
+.delivery-location-cards{
+  width:100%;
+  grid-template-columns:repeat(2,minmax(255px,1fr));
+  gap:24px;
+}
+.delivery-location-card{
+  min-height:112px;
+  border:1px solid rgba(110,60,22,.08);
+  border-radius:14px;
+  padding:20px 22px;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  gap:14px;
+  background:#ffe5bb;
+  box-shadow:0 7px 0 rgba(0,0,0,.08);
+}
+.delivery-location-card small{
+  font-size:18px;
+  line-height:1.05;
+  color:#655950;
+  white-space:nowrap;
+}
+.delivery-location-card strong{
+  margin-top:7px;
+  font-size:20px;
+  line-height:1;
+  letter-spacing:-.015em;
+  white-space:nowrap;
+}
+.delivery-pin{
+  align-self:start;
+  width:29px;
+  height:29px;
+  margin-top:2px;
+  border-radius:50%;
+  background:#ff2b12;
+  color:transparent;
+  box-shadow:inset -4px -3px 0 rgba(125,21,0,.28);
+}
+.delivery-pin::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  top:6px;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#ffd9b9;
+}
+.delivery-pin::after{
+  top:27px;
+  width:4px;
+  height:39px;
+  background:#665b54;
+}
+.delivery-location-card--grab .delivery-pin{background:#19ad4d;box-shadow:inset -4px -3px 0 rgba(0,87,35,.25);}
+.delivery-route{
+  align-self:end;
+  padding-bottom:6px;
+  font-family:'Work Sans',sans-serif;
+  font-size:19px;
+  font-weight:800;
+}
+@media(max-width:1180px){
+  .delivery-showcase-inner{grid-template-columns:1fr;gap:30px;}
+  .delivery-showcase-copy h2{font-size:38px;}
+  .delivery-location-cards{max-width:720px;}
+}
+@media(max-width:700px){
+  .delivery-showcase-copy h2{white-space:normal;font-size:31px;}
+  .delivery-location-cards{grid-template-columns:1fr;gap:16px;}
+  .delivery-location-card{min-height:104px;}
+}
