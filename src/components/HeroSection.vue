@@ -93,18 +93,16 @@ const menuImageGroups = computed(() =>
 const heroItems = computed(() => menuImageGroups.value.flat());
 
 const backgroundItems = computed(() => {
-    const groups = menuImageGroups.value;
-    const selected = [];
-    let row = 0;
+    const available = menuImageGroups.value.flat();
+    const shuffled = [...available];
 
-    while (selected.length < 8 && groups.some((items) => row < items.length)) {
-        groups.forEach((items) => {
-            if (selected.length < 8 && items[row]) selected.push(items[row]);
-        });
-        row += 1;
+    // Fisher-Yates creates a fresh combination and order on every page load.
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
     }
 
-    return selected;
+    return shuffled.slice(0, 8);
 });
 
 const activeHeroIndex = ref(0);
